@@ -34,6 +34,7 @@ var TaggedInput = React.createClass({
     unique: React.PropTypes.bool,
     autofocus: React.PropTypes.bool,
     backspaceDeletesWord: React.PropTypes.bool,
+    disabled: React.PropTypes.bool,
     placeholder: React.PropTypes.string,
     removeTagLabel: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.object]),
     delimiters: React.PropTypes.arrayOf(function (props, propName, componentName) {
@@ -61,6 +62,13 @@ var TaggedInput = React.createClass({
       unique: this.props.unique || true,
       currentInput: null
     };
+  },
+
+  componentWillReceiveProps: function (nextProps) {
+    this.setState({
+        tags: nextProps.tags || [],
+        unique: nextProps.unique || true
+    });
   },
 
   render: function () {
@@ -105,8 +113,9 @@ var TaggedInput = React.createClass({
         onBlur={this._handleBlur}
         value={s.currentInput}
         placeholder={placeholder}
-        tabIndex={p.tabIndex}>
-      </input>
+        tabIndex={p.tabIndex}
+        disabled={this.props.disabled}
+      />
     );
 
     return (
@@ -126,22 +135,24 @@ var TaggedInput = React.createClass({
   },
 
   _handleRemoveTag: function (index) {
-    var self = this, s = self.state, p = self.props;
+    if(!this.props.disabled) {
+      var self = this, s = self.state, p = self.props;
 
-    var removedItems = s.tags.splice(index, 1);
-    var duplicateIndex;
+      var removedItems = s.tags.splice(index, 1);
+      var duplicateIndex;
 
-    if (s.duplicateIndex) {
-      self.setState({duplicateIndex: null}, function () {
+      if (s.duplicateIndex) {
+        self.setState({duplicateIndex: null}, function () {
+            if (p.onRemoveTag) {
+                p.onRemoveTag(removedItems[0]);
+            }
+        });
+      } else {
         if (p.onRemoveTag) {
-          p.onRemoveTag(removedItems[0]);
+            p.onRemoveTag(removedItems[0]);
         }
-      });
-    } else {
-      if (p.onRemoveTag) {
-        p.onRemoveTag(removedItems[0]);
+        self.forceUpdate();
       }
-      self.forceUpdate();
     }
   },
 
